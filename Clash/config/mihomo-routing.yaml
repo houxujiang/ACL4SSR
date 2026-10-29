@@ -1,0 +1,700 @@
+# ACL4SSR routing only; no nodes, account IDs, credentials, or subscription URLs.
+# Source: https://github.com/ACL4SSR/ACL4SSR ; customizations: houxujiang.
+# CC-BY-SA-4.0 https://creativecommons.org/licenses/by-sa/4.0/
+# Target: 3x-ui v3.11.0 remote routing + Mihomo v1.19.31+.
+# Edit ACL4SSR_Online_Full.ini, then rebuild this generated file.
+proxy-groups:
+  -
+    name: "🚀 节点选择"
+    type: "select"
+    proxies:
+      - "♻️ 自动选择"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+      - "DIRECT"
+  -
+    name: "🚀 手动切换"
+    type: "select"
+    include-all-proxies: true
+    filter: ".*"
+    empty-fallback: "REJECT"
+  -
+    name: "♻️ 自动选择"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: ".*"
+    empty-fallback: "REJECT"
+  -
+    name: "📲 电报消息"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+      - "DIRECT"
+  -
+    name: "💬 OpenAi"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    proxies:
+      - "🇸🇬 狮城节点"
+      - "🇺🇲 美国节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+  -
+    name: "📢 谷歌FCM"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🚀 节点选择"
+      - "🇺🇲 美国节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "📢 谷歌🇨🇳Play下载"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "DIRECT"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "📢 谷歌🇨🇳Play服务"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "DIRECT"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "📢 谷歌🇨🇳"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🚀 节点选择"
+      - "🇺🇲 美国节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "📢 谷歌"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "DIRECT"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "📹 油管视频"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+      - "DIRECT"
+  -
+    name: "✖️ 推特"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "DIRECT"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "🎥 奈飞视频"
+    type: "select"
+    proxies:
+      - "🎥 奈飞节点"
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+      - "🇸🇬 狮城节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+      - "DIRECT"
+  -
+    name: "📺 巴哈姆特"
+    type: "select"
+    proxies:
+      - "🇨🇳 台湾节点"
+      - "🚀 节点选择"
+      - "🚀 手动切换"
+      - "DIRECT"
+  -
+    name: "📺 哔哩哔哩"
+    type: "select"
+    proxies:
+      - "🎯 全球直连"
+      - "🇨🇳 台湾节点"
+      - "🇭🇰 香港节点"
+  -
+    name: "🌍 国外媒体"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+      - "DIRECT"
+  -
+    name: "🌏 国内媒体"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🚀 手动切换"
+  -
+    name: "Ⓜ️ 微软Bing"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    proxies:
+      - "🇸🇬 狮城节点"
+      - "🇺🇲 美国节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+  -
+    name: "Ⓜ️ 微软云盘"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    proxies:
+      - "🇸🇬 狮城节点"
+      - "🇺🇲 美国节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+  -
+    name: "Ⓜ️ 微软服务"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    proxies:
+      - "🇸🇬 狮城节点"
+      - "🇺🇲 美国节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+  -
+    name: "🍎 苹果服务"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🚀 节点选择"
+      - "🇺🇲 美国节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "🎮 游戏平台"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🚀 节点选择"
+      - "🇺🇲 美国节点"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "🎶 网易音乐"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+    include-all-proxies: true
+    filter: "(网易|音乐|解锁|Music|NetEase)"
+    empty-fallback: "REJECT"
+  -
+    name: "🎯 全球直连"
+    type: "select"
+    proxies:
+      - "DIRECT"
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+  -
+    name: "🛑 广告拦截"
+    type: "select"
+    proxies:
+      - "REJECT"
+      - "DIRECT"
+  -
+    name: "🍃 应用净化"
+    type: "select"
+    proxies:
+      - "REJECT"
+      - "DIRECT"
+  -
+    name: "🐟 漏网之鱼"
+    type: "select"
+    proxies:
+      - "🚀 节点选择"
+      - "♻️ 自动选择"
+      - "DIRECT"
+      - "🇭🇰 香港节点"
+      - "🇨🇳 台湾节点"
+      - "🇸🇬 狮城节点"
+      - "🇯🇵 日本节点"
+      - "🇺🇲 美国节点"
+      - "🇰🇷 韩国节点"
+      - "🚀 手动切换"
+  -
+    name: "🇭🇰 香港节点"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: "^(?:xuihk(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:港|🇭🇰|(?:^|[^A-Za-z])(?:HK|hk)(?:$|[^A-Za-z])|Hong Kong|HongKong|hongkong))"
+    empty-fallback: "REJECT"
+  -
+    name: "🇯🇵 日本节点"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: "^(?:xuitk(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:日本|川日|东京|東京|大阪|泉日|埼玉|沪日|深日|🇯🇵|(?:^|[^A-Za-z])(?:JP|jp)(?:$|[^A-Za-z])|Japan|japan|Tokyo|tokyo))"
+    empty-fallback: "REJECT"
+  -
+    name: "🇺🇲 美国节点"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 150
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: "^(?:xui(?:hk|tk|sg)?usa(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|🇺🇸|🇺🇲|(?:^|[^A-Za-z])(?:US|us|USA|usa)(?:$|[^A-Za-z])|United States|UnitedStates|united states))"
+    empty-fallback: "REJECT"
+  -
+    name: "🇨🇳 台湾节点"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: "^(?![xX][uU][iI]).*(?:台|臺|新北|彰化|🇹🇼|(?:^|[^A-Za-z])(?:TW|tw)(?:$|[^A-Za-z])|Taiwan|taiwan)"
+    empty-fallback: "REJECT"
+  -
+    name: "🇸🇬 狮城节点"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: "^(?:xuisg(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:新加坡|坡|狮城|獅城|🇸🇬|(?:^|[^A-Za-z])(?:SG|sg)(?:$|[^A-Za-z])|Singapore|singapore))"
+    empty-fallback: "REJECT"
+  -
+    name: "🇰🇷 韩国节点"
+    type: "url-test"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    lazy: false
+    expected-status: 204
+    include-all-proxies: true
+    filter: "^(?:xui(?:hk|tk|sg)?(?:kr|skr)(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:🇰🇷|(?:^|[^A-Za-z])(?:KR|kr|KOR|kor)(?:$|[^A-Za-z])|Korea|korea|首尔|首爾|韩|韓))"
+    empty-fallback: "REJECT"
+  -
+    name: "🎥 奈飞节点"
+    type: "select"
+    include-all-proxies: true
+    filter: "(NF|奈飞|解锁|Netflix|NETFLIX|Media)"
+    empty-fallback: "REJECT"
+    proxies:
+      - "🚀 节点选择"
+rule-providers:
+  ACL4SSR_LocalAreaNetwork:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list"
+    path: "./ruleset/acl4ssr/LocalAreaNetwork.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_UnBan:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/UnBan.list"
+    path: "./ruleset/acl4ssr/UnBan.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_BanAD:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list"
+    path: "./ruleset/acl4ssr/BanAD.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_BanProgramAD:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list"
+    path: "./ruleset/acl4ssr/BanProgramAD.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_GoogleFCM:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/GoogleFCM.list"
+    path: "./ruleset/acl4ssr/GoogleFCM.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_GoogleCNProxyIP:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/GoogleCNProxyIP.list"
+    path: "./ruleset/acl4ssr/GoogleCNProxyIP.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_GoogleCN:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/GoogleCN.list"
+    path: "./ruleset/acl4ssr/GoogleCN.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_YouTube:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/YouTube.list"
+    path: "./ruleset/acl4ssr/YouTube.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Twitter:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Twitter.list"
+    path: "./ruleset/acl4ssr/Twitter.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_AI:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/AI.list"
+    path: "./ruleset/acl4ssr/AI.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_OpenAi:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/OpenAi.list"
+    path: "./ruleset/acl4ssr/OpenAi.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Google:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Google.list"
+    path: "./ruleset/acl4ssr/Google.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Bing:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Bing.list"
+    path: "./ruleset/acl4ssr/Bing.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_OneDrive:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/OneDrive.list"
+    path: "./ruleset/acl4ssr/OneDrive.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Microsoft:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Microsoft.list"
+    path: "./ruleset/acl4ssr/Microsoft.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Apple:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Apple.list"
+    path: "./ruleset/acl4ssr/Apple.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Telegram:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Telegram.list"
+    path: "./ruleset/acl4ssr/Telegram.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_NetEaseMusic:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/NetEaseMusic.list"
+    path: "./ruleset/acl4ssr/NetEaseMusic.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Epic:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Epic.list"
+    path: "./ruleset/acl4ssr/Epic.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Origin:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Origin.list"
+    path: "./ruleset/acl4ssr/Origin.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Sony:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Sony.list"
+    path: "./ruleset/acl4ssr/Sony.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Steam:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Steam.list"
+    path: "./ruleset/acl4ssr/Steam.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Nintendo:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Nintendo.list"
+    path: "./ruleset/acl4ssr/Nintendo.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Netflix:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Netflix.list"
+    path: "./ruleset/acl4ssr/Netflix.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Bahamut:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Bahamut.list"
+    path: "./ruleset/acl4ssr/Bahamut.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_BilibiliHMT:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/BilibiliHMT.list"
+    path: "./ruleset/acl4ssr/BilibiliHMT.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Bilibili:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Bilibili.list"
+    path: "./ruleset/acl4ssr/Bilibili.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_ChinaMedia:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaMedia.list"
+    path: "./ruleset/acl4ssr/ChinaMedia.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_ProxyMedia:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyMedia.list"
+    path: "./ruleset/acl4ssr/ProxyMedia.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_ProxyGFWlist:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyGFWlist.list"
+    path: "./ruleset/acl4ssr/ProxyGFWlist.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_ChinaDomain:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list"
+    path: "./ruleset/acl4ssr/ChinaDomain.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_ChinaCompanyIp:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaCompanyIp.list"
+    path: "./ruleset/acl4ssr/ChinaCompanyIp.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+  ACL4SSR_Download:
+    type: "http"
+    behavior: "classical"
+    format: "text"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Download.list"
+    path: "./ruleset/acl4ssr/Download.list"
+    interval: 86400
+    proxy: "🚀 节点选择"
+rules:
+  - "RULE-SET,ACL4SSR_LocalAreaNetwork,🎯 全球直连"
+  - "RULE-SET,ACL4SSR_UnBan,🎯 全球直连"
+  - "RULE-SET,ACL4SSR_BanAD,🛑 广告拦截"
+  - "RULE-SET,ACL4SSR_BanProgramAD,🍃 应用净化"
+  - "RULE-SET,ACL4SSR_GoogleFCM,📢 谷歌FCM"
+  - "DOMAIN-SUFFIX,xn--ngstr-lra8j.com,📢 谷歌🇨🇳Play下载"
+  - "DOMAIN-SUFFIX,services.googleapis.cn,📢 谷歌🇨🇳Play服务"
+  - "RULE-SET,ACL4SSR_GoogleCNProxyIP,📢 谷歌🇨🇳Play服务"
+  - "RULE-SET,ACL4SSR_GoogleCN,📢 谷歌🇨🇳"
+  - "RULE-SET,ACL4SSR_YouTube,📹 油管视频"
+  - "DOMAIN-SUFFIX,x.ai,✖️ 推特"
+  - "DOMAIN-SUFFIX,grok.com,✖️ 推特"
+  - "RULE-SET,ACL4SSR_Twitter,✖️ 推特"
+  - "RULE-SET,ACL4SSR_AI,💬 OpenAi"
+  - "RULE-SET,ACL4SSR_OpenAi,💬 OpenAi"
+  - "RULE-SET,ACL4SSR_Google,📢 谷歌"
+  - "RULE-SET,ACL4SSR_Bing,Ⓜ️ 微软Bing"
+  - "RULE-SET,ACL4SSR_OneDrive,Ⓜ️ 微软云盘"
+  - "RULE-SET,ACL4SSR_Microsoft,Ⓜ️ 微软服务"
+  - "RULE-SET,ACL4SSR_Apple,🍎 苹果服务"
+  - "RULE-SET,ACL4SSR_Telegram,📲 电报消息"
+  - "RULE-SET,ACL4SSR_NetEaseMusic,🎶 网易音乐"
+  - "RULE-SET,ACL4SSR_Epic,🎮 游戏平台"
+  - "RULE-SET,ACL4SSR_Origin,🎮 游戏平台"
+  - "RULE-SET,ACL4SSR_Sony,🎮 游戏平台"
+  - "RULE-SET,ACL4SSR_Steam,🎮 游戏平台"
+  - "RULE-SET,ACL4SSR_Nintendo,🎮 游戏平台"
+  - "RULE-SET,ACL4SSR_Netflix,🎥 奈飞视频"
+  - "RULE-SET,ACL4SSR_Bahamut,📺 巴哈姆特"
+  - "RULE-SET,ACL4SSR_BilibiliHMT,📺 哔哩哔哩"
+  - "RULE-SET,ACL4SSR_Bilibili,📺 哔哩哔哩"
+  - "RULE-SET,ACL4SSR_ChinaMedia,🌏 国内媒体"
+  - "RULE-SET,ACL4SSR_ProxyMedia,🌍 国外媒体"
+  - "RULE-SET,ACL4SSR_ProxyGFWlist,🚀 节点选择"
+  - "RULE-SET,ACL4SSR_ChinaDomain,🎯 全球直连"
+  - "RULE-SET,ACL4SSR_ChinaCompanyIp,🎯 全球直连"
+  - "RULE-SET,ACL4SSR_Download,🎯 全球直连"
+  - "GEOIP,CN,🎯 全球直连"
+  - "MATCH,🐟 漏网之鱼"
