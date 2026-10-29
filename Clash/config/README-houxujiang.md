@@ -7,6 +7,8 @@
 - `ACL4SSR_Online_Full.ini`：供支持该格式的订阅转换工具使用。
 - `mihomo-routing.yaml`：只含策略组、规则提供者和规则，供 3x-ui 3.11.0 的远程 Clash 规则模板使用；不包含节点或任何访问凭据。
 - `../../Tool/build_mihomo_routing.py`：由 INI 生成原生模板，Python 3.9+，无需第三方依赖。
+- `shadowrocket-routing.conf`：独立的 Shadowrocket 分流配置，不包含节点；先保留原生节点订阅，再在“配置”页下载使用。手机导入与分组行为仍待实机确认，详见 `SHADOWROCKET-IMPORT.md`。
+- `../../Tool/build_shadowrocket_routing.py`：与 Mihomo 构建脚本放在一起，从同一 INI 生成 Shadowrocket 配置。
 
 ```sh
 python Tool/build_mihomo_routing.py --ini Clash/config/ACL4SSR_Online_Full.ini --output Clash/config/mihomo-routing.yaml
