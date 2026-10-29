@@ -41,19 +41,20 @@ def parse_ini(text):
 
 def make_group(group):
     name, kind, options = group["name"], group["type"], group["options"]
-    if kind not in ("select", "url-test"):
+    if kind not in ("select", "url-test", "fallback"):
         raise ValueError(f"Unsupported group type: {kind}")
     output = {"name": name, "type": kind}
     refs = [option[2:] for option in options if option.startswith("[]")]
     patterns = [option for option in options if option and not option.startswith(("[]", "http://", "https://"))]
-    if kind == "url-test":
+    if kind in ("url-test", "fallback"):
         urls = [option for option in options if option.startswith(("http://", "https://"))]
         if len(urls) != 1:
-            raise ValueError("Each url-test group requires exactly one health-check URL")
+            raise ValueError("Each health-check group requires exactly one test URL")
         time_option = options[-1]
         interval, _, tolerance = time_option.partition(",,")
-        output.update({"url": urls[0], "interval": int(interval), "tolerance": int(tolerance or "50"),
-                       "lazy": False, "expected-status": 204})
+        output.update({"url": urls[0], "interval": int(interval), "lazy": False, "expected-status": 204})
+        if kind == "url-test":
+            output["tolerance"] = int(tolerance or "50")
         patterns.remove(time_option)
     if refs:
         output["proxies"] = refs
@@ -81,6 +82,20 @@ def build(rules, groups, provider_interval):
         if group["name"] in FOUR_REGION_GROUPS:
             if group["type"] != "url-test" or group.get("proxies") != FOUR_REGIONS:
                 raise ValueError("AI/Microsoft must retain exactly the four permitted exit regions")
+    edges = {group["name"]: group.get("proxies", []) for group in output_groups}
+    def visit(name, active, done):
+        if name in active:
+            raise ValueError("Proxy-group reference cycle")
+        if name in done or name not in edges:
+            return
+        active.add(name)
+        for ref in edges[name]:
+            visit(ref, active, done)
+        active.remove(name)
+        done.add(name)
+    done = set()
+    for name in edges:
+        visit(name, set(), done)
     providers, output_rules = {}, []
     for rule in rules:
         policy, source = rule["policy"], rule["source"]
@@ -163,7 +178,8 @@ def check_names(path, groups):
     counts = dict.fromkeys(REGIONS, 0)
     rejected = 0
     for name in names:
-        matches = [code for code, group in REGIONS.items() if re.search(by_name[group]["filter"], name)]
+        matches = [code for code, group in REGIONS.items() if re.search(
+            by_name["🇹🇼 台湾优先" if code == "TW" and "🇹🇼 台湾优先" in by_name else group]["filter"], name)]
         if len(matches) != 1:
             rejected += 1
         else:
@@ -192,7 +208,8 @@ def main():
               "rules": len(config["rules"]), "upstream_interval_seconds": args.provider_interval,
               "server_generated_proxies_preserved": True, "server_generated_PROXY_preserved": True,
               "contains_node_definitions": False, "contains_proxy_providers": False,
-              "dynamic_empty_fallback": "REJECT", "netflix_default_fallback": "🚀 节点选择"}
+              "dynamic_empty_fallback": "REJECT", "netflix_default_fallback": "🚀 节点选择",
+              "taiwan_policy": "first available TW, otherwise HK, otherwise JP", "group_graph_has_cycles": False}
     if args.check_subscription:
         report["local_subscription_check"] = check_names(args.check_subscription, config["proxy-groups"])
     header = ("# ACL4SSR routing only; no nodes, account IDs, credentials, or subscription URLs.\n"

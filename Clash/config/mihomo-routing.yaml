@@ -28,9 +28,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     include-all-proxies: true
     filter: ".*"
     empty-fallback: "REJECT"
@@ -53,9 +53,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     proxies:
       - "🇸🇬 狮城节点"
       - "🇺🇲 美国节点"
@@ -216,9 +216,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     proxies:
       - "🇸🇬 狮城节点"
       - "🇺🇲 美国节点"
@@ -229,9 +229,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     proxies:
       - "🇸🇬 狮城节点"
       - "🇺🇲 美国节点"
@@ -242,9 +242,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     proxies:
       - "🇸🇬 狮城节点"
       - "🇺🇲 美国节点"
@@ -324,9 +324,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     include-all-proxies: true
     filter: "^(?:xuihk(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:港|🇭🇰|(?:^|[^A-Za-z])(?:HK|hk)(?:$|[^A-Za-z])|Hong Kong|HongKong|hongkong))"
     empty-fallback: "REJECT"
@@ -335,9 +335,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     include-all-proxies: true
     filter: "^(?:xuitk(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:日本|川日|东京|東京|大阪|泉日|埼玉|沪日|深日|🇯🇵|(?:^|[^A-Za-z])(?:JP|jp)(?:$|[^A-Za-z])|Japan|japan|Tokyo|tokyo))"
     empty-fallback: "REJECT"
@@ -346,20 +346,33 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 150
     lazy: false
     expected-status: 204
+    tolerance: 150
     include-all-proxies: true
     filter: "^(?:xui(?:hk|tk|sg)?usa(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|🇺🇸|🇺🇲|(?:^|[^A-Za-z])(?:US|us|USA|usa)(?:$|[^A-Za-z])|United States|UnitedStates|united states))"
     empty-fallback: "REJECT"
   -
     name: "🇨🇳 台湾节点"
+    type: "fallback"
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    lazy: false
+    expected-status: 204
+    proxies:
+      - "🇹🇼 台湾优先"
+      - "🇭🇰 香港节点"
+      - "🇯🇵 日本节点"
+  -
+    name: "🇹🇼 台湾优先"
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
+    proxies:
+      - "REJECT"
     include-all-proxies: true
     filter: "^(?![xX][uU][iI]).*(?:台|臺|新北|彰化|🇹🇼|(?:^|[^A-Za-z])(?:TW|tw)(?:$|[^A-Za-z])|Taiwan|taiwan)"
     empty-fallback: "REJECT"
@@ -368,9 +381,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     include-all-proxies: true
     filter: "^(?:xuisg(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:新加坡|坡|狮城|獅城|🇸🇬|(?:^|[^A-Za-z])(?:SG|sg)(?:$|[^A-Za-z])|Singapore|singapore))"
     empty-fallback: "REJECT"
@@ -379,9 +392,9 @@ proxy-groups:
     type: "url-test"
     url: "http://www.gstatic.com/generate_204"
     interval: 300
-    tolerance: 50
     lazy: false
     expected-status: 204
+    tolerance: 50
     include-all-proxies: true
     filter: "^(?:xui(?:hk|tk|sg)?(?:kr|skr)(?:\\.jiangxin\\.org)?(?:$|[-_ @])|(?![xX][uU][iI]).*(?:🇰🇷|(?:^|[^A-Za-z])(?:KR|kr|KOR|kor)(?:$|[^A-Za-z])|Korea|korea|首尔|首爾|韩|韓))"
     empty-fallback: "REJECT"
