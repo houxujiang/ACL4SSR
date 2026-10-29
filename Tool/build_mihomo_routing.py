@@ -209,7 +209,7 @@ def main():
               "server_generated_proxies_preserved": True, "server_generated_PROXY_preserved": True,
               "contains_node_definitions": False, "contains_proxy_providers": False,
               "dynamic_empty_fallback": "REJECT", "netflix_default_fallback": "🚀 节点选择",
-              "taiwan_policy": "first available TW, otherwise HK, otherwise JP", "group_graph_has_cycles": False}
+              "taiwan_policy": "first available TW, otherwise JP, otherwise KR", "group_graph_has_cycles": False}
     if args.check_subscription:
         report["local_subscription_check"] = check_names(args.check_subscription, config["proxy-groups"])
     header = ("# ACL4SSR routing only; no nodes, account IDs, credentials, or subscription URLs.\n"

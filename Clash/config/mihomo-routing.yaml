@@ -361,8 +361,8 @@ proxy-groups:
     expected-status: 204
     proxies:
       - "🇹🇼 台湾优先"
-      - "🇭🇰 香港节点"
       - "🇯🇵 日本节点"
+      - "🇰🇷 韩国节点"
   -
     name: "🇹🇼 台湾优先"
     type: "url-test"

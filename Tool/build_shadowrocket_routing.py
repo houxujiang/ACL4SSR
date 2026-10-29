@@ -35,7 +35,7 @@ def make_shadowrocket(rules, groups, taiwan_present=False):
                 group = native_groups['🇹🇼 台湾优先']
                 kind, refs, regex = 'url-test', [], group['filter']
             else:
-                kind, refs, regex = 'fallback', ['🇭🇰 香港节点', '🇯🇵 日本节点'], None
+                kind, refs, regex = 'fallback', ['🇯🇵 日本节点', '🇰🇷 韩国节点'], None
         if name == '🎥 奈飞节点':
             # No current nodes have NF tags; make the fallback explicit and unambiguous.
             kind, refs, regex = 'select', ['🚀 节点选择'], None
@@ -71,7 +71,7 @@ def make_shadowrocket(rules, groups, taiwan_present=False):
 # Uses native policy-regex-filter syntax shown by public Shadowrocket config authors.
 # Does not assume Mihomo include-all-proxies or empty-fallback fields exist here.
 # AI/Microsoft use the union of SG/US/JP/KR exit filters to avoid nested url-test groups.
-# Current no-TW mode uses HK then JP; regenerate with --taiwan-present after adding TW.
+# Current no-TW mode uses JP then KR; regenerate with --taiwan-present after adding TW.
 # Netflix node selector uses the main node selector when no NF-tagged nodes exist.
 # No DNS, MITM, scripts, rewrites, certificates, or subscription settings are supplied.
 # Before connecting, check that AI/Microsoft contain only the intended 14 non-HK exits.
@@ -98,7 +98,7 @@ def main():
     summary = {'profile': 'Shadowrocket routing only', 'groups': 34, 'rules': 39,
                'remote_rule_sets': 33, 'terminal_rule': 'FINAL',
                'ai_microsoft_candidates': 'SG/US/JP/KR exit-filter union, without nested url-test groups',
-               'taiwan_policy': 'TW only' if args.taiwan_present else 'HK then JP fallback',
+               'taiwan_policy': 'TW only' if args.taiwan_present else 'JP then KR fallback',
                'taiwan_regeneration_required_after_adding_TW': not args.taiwan_present,
                'netflix_fallback': 'main node selector', 'contains_nodes_or_subscription_url': False,
                'phone_validated': False, 'validation': 'generation and static checks only',
