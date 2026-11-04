@@ -1,6 +1,8 @@
 name: Track upstream branches
 
 on:
+  schedule:
+    - cron: '41 * * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -46,7 +48,8 @@ jobs:
           OID = re.compile(r"[0-9a-f]{40}\Z")
           ZERO = "0" * 40
           PREFIX = "refs/heads/upstream/"
-          MAX_UPDATES = 100
+          MAX_UPDATES = 1000
+          COMMIT_READ_BATCH = 50
           MAX_PAGES = 500
           
           SNAPSHOT_QUERY = """query Snapshot($owner:String!,$name:String!,$cursor:String) {
@@ -140,7 +143,7 @@ jobs:
                   if any(ref.startswith(other + "/") for other in all_refs if ref != other):
                       plan.blockers.append("Existing/proposed branch names have a prefix collision: " + ref)
               if len(plan.updates) > MAX_UPDATES:
-                  plan.blockers.append("More than 100 updates need review; no non-atomic chunking is attempted.")
+                  plan.blockers.append("More than 1000 updates exceed the bounded candidate budget; no non-atomic chunking is attempted.")
               return plan
           
           
@@ -227,6 +230,11 @@ jobs:
                   oids = sorted(set(oids))
                   if not oids:
                       return
+                  for start in range(0, len(oids), COMMIT_READ_BATCH):
+                      self._verify_commit_batch(full_name, oids[start:start + COMMIT_READ_BATCH])
+          
+              def _verify_commit_batch(self, full_name, oids):
+                  # Read-only batching is independent of the single atomic write below.
                   owner, name = full_name.split("/", 1)
                   variables = {"owner": owner, "name": name}
                   declarations, fields = ["$owner:String!", "$name:String!"], []
@@ -273,6 +281,8 @@ jobs:
               default = fork.get("defaultBranchRef")
               if not isinstance(default, dict) or default.get("name") != config["default_branch"]:
                   raise SyncError("Fork default branch changed; configuration review required.")
+              if "refs/heads/" + default["name"] not in fork_snapshot["refs"]:
+                  raise SyncError("Fork default branch is missing from the complete head snapshot.")
               inherited = fork.get("parent")
               if not isinstance(inherited, dict) or (inherited.get("databaseId"), inherited.get("nameWithOwner")) != (
                       config["parent_id"], config["parent"]) or inherited.get("isPrivate") is not False:
@@ -283,8 +293,15 @@ jobs:
               for repo in (fork, parent):
                   if not isinstance(repo.get("id"), str) or not repo["id"]:
                       raise SyncError("Repository node ID is missing.")
-                  if repo.get("isArchived") is not False or repo.get("isDisabled") is not False:
-                      raise SyncError("An archived, disabled or malformed repository needs review.")
+                  if repo.get("isDisabled") is not False:
+                      raise SyncError("A disabled or malformed repository needs review.")
+              if fork.get("isArchived") is not False:
+                  raise SyncError("The fork is archived or has malformed archive status; no writable destination is available.")
+              if type(parent.get("isArchived")) is not bool:
+                  raise SyncError("Upstream archive-status metadata is malformed.")
+              parent_default = parent.get("defaultBranchRef")
+              if not isinstance(parent_default, dict) or not valid_branch(parent_default.get("name")) or "refs/heads/" + parent_default["name"] not in upstream_snapshot["refs"]:
+                  raise SyncError("Upstream default branch is missing from the complete head snapshot.")
               if config["default_branch"].startswith("upstream/") or config["default_branch"] == "upstream":
                   raise SyncError("The tracking namespace must not contain the default branch.")
           
@@ -302,6 +319,7 @@ jobs:
               validate_metadata(config, fork, parent)
               plan = build_plan(fork["refs"], parent["refs"], namespace_reserved=config.get("namespace_reserved", False))
               report({"mode": mode, "fork": config["fork"], "parent": config["parent"], "plan": asdict(plan),
+                      "upstream_archived": parent["metadata"]["isArchived"],
                       "git_objects_downloaded": 0, "blob_or_lfs_requests": 0})
               if mode == "audit":
                   report({"result": "Audit complete; no mutation attempted."})
@@ -368,8 +386,8 @@ jobs:
             "parent": "ACL4SSR/ACL4SSR",
             "parent_id": 617804592,
             "default_branch": "rm",
-            "namespace_reserved": false,
-            "schedule_enabled": false
+            "namespace_reserved": true,
+            "schedule_enabled": true
           }
           JSON
       - name: Audit or apply the approved tracking plan
@@ -378,4 +396,3 @@ jobs:
           GH_WRITE_TOKEN: ${{ github.token }}
           UPSTREAM_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'apply' }}
         run: python3 "$RUNNER_TEMP/upstream-sync.py" "$RUNNER_TEMP/upstream-config.json"
-
