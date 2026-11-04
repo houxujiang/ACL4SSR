@@ -1,0 +1,381 @@
+name: Track upstream branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Audit only or apply the approved branch-tracking plan
+        type: choice
+        options: [audit, apply]
+        default: audit
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: upstream-tracking
+  cancel-in-progress: false
+
+jobs:
+  track:
+    if: "github.repository_id == '693310364' && endsWith(github.workflow_ref, '@refs/heads/rm')"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Prepare trusted inline tracking tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cat > "$RUNNER_TEMP/upstream-sync.py" <<'PY'
+          """API-only candidate: track existing fork-network commits; never fetch Git data."""
+          from __future__ import annotations
+          
+          from dataclasses import asdict, dataclass, field
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import sys
+          import urllib.error
+          import urllib.request
+          import uuid
+          
+          NAME = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
+          OID = re.compile(r"[0-9a-f]{40}\Z")
+          ZERO = "0" * 40
+          PREFIX = "refs/heads/upstream/"
+          MAX_UPDATES = 100
+          MAX_PAGES = 500
+          
+          SNAPSHOT_QUERY = """query Snapshot($owner:String!,$name:String!,$cursor:String) {
+            repository(owner:$owner,name:$name) {
+              id databaseId nameWithOwner isFork isPrivate isArchived isDisabled
+              defaultBranchRef { name }
+              parent { id databaseId nameWithOwner isPrivate }
+              refs(refPrefix:"refs/heads/",first:100,after:$cursor,
+                   orderBy:{field:ALPHABETICAL,direction:ASC}) {
+                totalCount nodes { name prefix target { __typename oid } }
+                pageInfo { hasNextPage endCursor }
+              }
+            }
+          }"""
+          
+          UPDATE_MUTATION = """mutation TrackUpstream($input:UpdateRefsInput!) {
+            updateRefs(input:$input) { clientMutationId }
+          }"""
+          
+          
+          class SyncError(Exception):
+              pass
+          
+          
+          class MutationError(SyncError):
+              """A mutation may have reached the server; never automatically retry it."""
+          
+          
+          @dataclass(frozen=True)
+          class Update:
+              name: str
+              beforeOid: str
+              afterOid: str
+              force: bool = False
+          
+          
+          @dataclass
+          class Plan:
+              updates: list[Update] = field(default_factory=list)
+              working_branches: list[dict] = field(default_factory=list)
+              retained_refs: list[str] = field(default_factory=list)
+              blockers: list[str] = field(default_factory=list)
+          
+          
+          def valid_branch(branch):
+              if not isinstance(branch, str) or not branch or branch == "@":
+                  return False
+              if branch.startswith("/") or branch.endswith(("/", ".")):
+                  return False
+              if any(part.startswith(".") or part.endswith(".lock") for part in branch.split("/")):
+                  return False
+              if any(pattern in branch for pattern in ("..", "//", "@{")):
+                  return False
+              return not any(ord(ch) <= 32 or ord(ch) == 127 or ch in "~^:?*[\\" for ch in branch)
+          
+          
+          def validate_refs(refs):
+              if not isinstance(refs, dict):
+                  raise SyncError("Unexpected branch-reference shape.")
+              for ref, oid in refs.items():
+                  if (not isinstance(ref, str) or not ref.startswith("refs/heads/")
+                          or not valid_branch(ref.removeprefix("refs/heads/"))
+                          or not isinstance(oid, str) or not OID.fullmatch(oid) or oid == ZERO):
+                      raise SyncError("Unexpected branch-reference data.")
+          
+          
+          def build_plan(fork, upstream, *, namespace_reserved=False):
+              validate_refs(fork)
+              validate_refs(upstream)
+              if not fork or not upstream:
+                  raise SyncError("An empty repository requires manual review.")
+              plan = Plan()
+              existing_tracking = {ref for ref in fork if ref.startswith(PREFIX)}
+              if existing_tracking and not namespace_reserved:
+                  plan.blockers.append("The upstream/ namespace exists and has not been explicitly reserved.")
+              desired = set()
+              for ref, new in sorted(upstream.items()):
+                  branch = ref.removeprefix("refs/heads/")
+                  tracking = PREFIX + branch
+                  desired.add(tracking)
+                  old = fork.get(tracking, ZERO)
+                  if old != new:
+                      # GitHub checks ancestry and the old value atomically server-side.
+                      plan.updates.append(Update(tracking, old, new, False))
+                  if ref in fork and not ref.startswith(PREFIX):
+                      plan.working_branches.append({"name": branch, "unchanged": True,
+                          "comparison": "identical" if fork[ref] == new else "different tips; manual merge/PR review required"})
+              plan.retained_refs = sorted(ref for ref in fork if ref not in desired and ref not in upstream)
+              all_refs = set(fork) | desired
+              for ref in sorted(all_refs):
+                  if any(ref.startswith(other + "/") for other in all_refs if ref != other):
+                      plan.blockers.append("Existing/proposed branch names have a prefix collision: " + ref)
+              if len(plan.updates) > MAX_UPDATES:
+                  plan.blockers.append("More than 100 updates need review; no non-atomic chunking is attempted.")
+              return plan
+          
+          
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          
+          
+          class GitHub:
+              def __init__(self, token):
+                  self.token = token
+                  self.http = urllib.request.build_opener(NoRedirect)
+          
+              def graphql(self, query, variables, *, mutation=False):
+                  error_type = MutationError if mutation else SyncError
+                  req = urllib.request.Request("https://api.github.com/graphql",
+                      data=json.dumps({"query": query, "variables": variables}).encode(),
+                      headers={"Authorization": "Bearer " + self.token,
+                               "Content-Type": "application/json", "Accept": "application/json",
+                               "User-Agent": "approved-fork-upstream-tracker"}, method="POST")
+                  try:
+                      with self.http.open(req, timeout=90) as response:
+                          body = response.read(8 * 1024 * 1024 + 1)
+                      if len(body) > 8 * 1024 * 1024:
+                          raise ValueError("oversize")
+                      value = json.loads(body)
+                  except (urllib.error.URLError, OSError, ValueError):
+                      raise error_type("GitHub API request failed; raw response suppressed.") from None
+                  if not isinstance(value, dict) or value.get("errors") or not isinstance(value.get("data"), dict):
+                      raise error_type("GitHub rejected the API operation or returned invalid data; no permission escalation or fallback is attempted.")
+                  return value["data"]
+          
+              def snapshot(self, full_name):
+                  if not NAME.fullmatch(full_name):
+                      raise SyncError("Invalid configured repository name.")
+                  owner, name = full_name.split("/", 1)
+                  cursor, cursors, refs, identity, total = None, set(), {}, None, None
+                  for _ in range(MAX_PAGES):
+                      data = self.graphql(SNAPSHOT_QUERY, {"owner": owner, "name": name, "cursor": cursor})
+                      repo = data.get("repository")
+                      if not isinstance(repo, dict):
+                          raise SyncError("Repository lookup returned no readable repository.")
+                      current_identity = {k: v for k, v in repo.items() if k != "refs"}
+                      if identity is None:
+                          identity = current_identity
+                      elif identity != current_identity:
+                          raise SyncError("Repository metadata changed during pagination.")
+                      connection = repo.get("refs")
+                      if not isinstance(connection, dict) or not isinstance(connection.get("nodes"), list):
+                          raise SyncError("Branch pagination returned invalid data.")
+                      count = connection.get("totalCount")
+                      if type(count) is not int or count < 1 or (total is not None and total != count):
+                          raise SyncError("Repository branch count changed or is invalid.")
+                      total = count
+                      for node in connection["nodes"]:
+                          if not isinstance(node, dict) or node.get("prefix") != "refs/heads/":
+                              raise SyncError("Unexpected reference prefix.")
+                          target = node.get("target")
+                          if not isinstance(target, dict) or target.get("__typename") != "Commit":
+                              raise SyncError("A branch does not point to a readable commit.")
+                          branch = node.get("name")
+                          if not valid_branch(branch):
+                              raise SyncError("Invalid branch name in API data.")
+                          ref = "refs/heads/" + branch
+                          if ref in refs:
+                              raise SyncError("Duplicate branch while paging; snapshot is not stable.")
+                          refs[ref] = target.get("oid")
+                      page = connection.get("pageInfo")
+                      if not isinstance(page, dict) or type(page.get("hasNextPage")) is not bool:
+                          raise SyncError("Invalid pagination metadata.")
+                      if not page["hasNextPage"]:
+                          if len(refs) != total:
+                              raise SyncError("Branch pagination is incomplete.")
+                          validate_refs(refs)
+                          return {"metadata": identity, "refs": refs}
+                      cursor = page.get("endCursor")
+                      if not isinstance(cursor, str) or not cursor or cursor in cursors:
+                          raise SyncError("Pagination cursor is missing or repeated.")
+                      cursors.add(cursor)
+                  raise SyncError("Branch pagination exceeds the safety limit.")
+          
+              def verify_commits_readable_in_fork(self, full_name, oids):
+                  # Select only commit type/OID: no blob, tree contents or LFS requests.
+                  oids = sorted(set(oids))
+                  if not oids:
+                      return
+                  owner, name = full_name.split("/", 1)
+                  variables = {"owner": owner, "name": name}
+                  declarations, fields = ["$owner:String!", "$name:String!"], []
+                  for i, oid in enumerate(oids):
+                      if not OID.fullmatch(oid) or oid == ZERO:
+                          raise SyncError("Invalid requested commit OID.")
+                      declarations.append(f"$o{i}:GitObjectID!")
+                      variables[f"o{i}"] = oid
+                      fields.append(f"c{i}:object(oid:$o{i}) {{ __typename oid }}")
+                  query = "query ExistingCommits(" + ",".join(declarations) + "){repository(owner:$owner,name:$name){" + " ".join(fields) + "}}"
+                  repo = self.graphql(query, variables).get("repository")
+                  if not isinstance(repo, dict):
+                      raise SyncError("Fork commit lookup failed.")
+                  for i, oid in enumerate(oids):
+                      obj = repo.get(f"c{i}")
+                      if not isinstance(obj, dict) or (obj.get("__typename"), obj.get("oid")) != ("Commit", oid):
+                          raise SyncError("An upstream commit is not readable in the fork network; no upload or alternate credential is attempted.")
+          
+              def update_refs(self, node_id, updates):
+                  if not updates:
+                      return
+                  if len(updates) > MAX_UPDATES:
+                      raise SyncError("Atomic update batch is too large.")
+                  seen = set()
+                  for update in updates:
+                      if (not update.name.startswith(PREFIX) or not valid_branch(update.name.removeprefix("refs/heads/"))
+                              or update.name in seen or update.force is not False
+                              or not OID.fullmatch(update.beforeOid)
+                              or not OID.fullmatch(update.afterOid) or update.afterOid == ZERO):
+                          raise SyncError("Unsafe ref mutation was rejected locally.")
+                      seen.add(update.name)
+                  mutation_id = "upstream-track-" + uuid.uuid4().hex
+                  data = self.graphql(UPDATE_MUTATION, {"input": {"repositoryId": node_id,
+                      "clientMutationId": mutation_id, "refUpdates": [asdict(u) for u in updates]}}, mutation=True)
+                  result = data.get("updateRefs")
+                  if not isinstance(result, dict) or result.get("clientMutationId") != mutation_id:
+                      raise MutationError("Mutation acknowledgement was invalid; outcome requires read-only reconciliation.")
+          
+          
+          def validate_metadata(config, fork_snapshot, upstream_snapshot):
+              fork, parent = fork_snapshot["metadata"], upstream_snapshot["metadata"]
+              if (fork.get("databaseId"), fork.get("nameWithOwner")) != (config["fork_id"], config["fork"]) or fork.get("isFork") is not True or fork.get("isPrivate") is not False:
+                  raise SyncError("Fork identity, fork status or visibility changed.")
+              default = fork.get("defaultBranchRef")
+              if not isinstance(default, dict) or default.get("name") != config["default_branch"]:
+                  raise SyncError("Fork default branch changed; configuration review required.")
+              inherited = fork.get("parent")
+              if not isinstance(inherited, dict) or (inherited.get("databaseId"), inherited.get("nameWithOwner")) != (
+                      config["parent_id"], config["parent"]) or inherited.get("isPrivate") is not False:
+                  raise SyncError("Fork parent identity or public state changed.")
+              if (parent.get("databaseId"), parent.get("nameWithOwner")) != (
+                      config["parent_id"], config["parent"]) or parent.get("isPrivate") is not False:
+                  raise SyncError("Upstream identity or public state changed.")
+              for repo in (fork, parent):
+                  if not isinstance(repo.get("id"), str) or not repo["id"]:
+                      raise SyncError("Repository node ID is missing.")
+                  if repo.get("isArchived") is not False or repo.get("isDisabled") is not False:
+                      raise SyncError("An archived, disabled or malformed repository needs review.")
+              if config["default_branch"].startswith("upstream/") or config["default_branch"] == "upstream":
+                  raise SyncError("The tracking namespace must not contain the default branch.")
+          
+          
+          def report(value):
+              text = json.dumps(value, ensure_ascii=False, indent=2)
+              print(text, flush=True)
+              if os.environ.get("GITHUB_STEP_SUMMARY"):
+                  with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as stream:
+                      stream.write("```json\n" + text + "\n```\n")
+          
+          
+          def execute(client, config, mode):
+              fork, parent = client.snapshot(config["fork"]), client.snapshot(config["parent"])
+              validate_metadata(config, fork, parent)
+              plan = build_plan(fork["refs"], parent["refs"], namespace_reserved=config.get("namespace_reserved", False))
+              report({"mode": mode, "fork": config["fork"], "parent": config["parent"], "plan": asdict(plan),
+                      "git_objects_downloaded": 0, "blob_or_lfs_requests": 0})
+              if mode == "audit":
+                  report({"result": "Audit complete; no mutation attempted."})
+                  return plan
+              if mode != "apply" or not config.get("namespace_reserved", False) or plan.blockers:
+                  raise SyncError("Apply is not approved for this namespace, or the plan has blockers; no mutation attempted.")
+              client.verify_commits_readable_in_fork(config["fork"], [u.afterOid for u in plan.updates])
+              fork_now, parent_now = client.snapshot(config["fork"]), client.snapshot(config["parent"])
+              validate_metadata(config, fork_now, parent_now)
+              if fork_now != fork or parent_now != parent:
+                  raise SyncError("Repository metadata/branches changed before mutation; retry from a fresh snapshot.")
+              expected = dict(fork["refs"])
+              expected.update({u.name: u.afterOid for u in plan.updates})
+              try:
+                  client.update_refs(fork["metadata"]["id"], plan.updates)
+              except MutationError:
+                  # A lost response can follow a successful server commit. Read only;
+                  # never retry or roll back a transaction after an ambiguous response.
+                  outcome = "unknown; read-only inspection required"
+                  try:
+                      observed = client.snapshot(config["fork"])["refs"]
+                      outcome = "expected refs observed" if observed == expected else "unchanged refs observed" if observed == fork["refs"] else "other/concurrent state observed"
+                  except Exception:
+                      pass
+                  report({"result": "STOPPED after mutation error", "reconciliation": outcome,
+                          "mutation_retried": False, "rolled_back": False})
+                  raise SyncError("Atomic mutation failed or its response was ambiguous; no retry or permission escalation attempted.") from None
+              fork_after, parent_after = client.snapshot(config["fork"]), client.snapshot(config["parent"])
+              validate_metadata(config, fork_after, parent_after)
+              if fork_after["refs"] != expected or parent_after != parent:
+                  raise SyncError("Post-mutation verification found drift; stop for review/retry.")
+              report({"result": "Verified API-only upstream tracking", "changed_refs": len(plan.updates),
+                      "working_branches_moved": 0, "repository_code_executed": False,
+                      "customization_compatibility_verified": False})
+              return plan
+          
+          
+          def main(config):
+              token = os.environ.pop("GH_WRITE_TOKEN", "")
+              mode = os.environ.get("UPSTREAM_MODE", "audit")
+              if not token or mode not in ("audit", "apply"):
+                  raise SyncError("Missing current-repository token or invalid mode.")
+              if (os.environ.get("GITHUB_REPOSITORY"), os.environ.get("GITHUB_REPOSITORY_ID")) != (config["fork"], str(config["fork_id"])):
+                  raise SyncError("Run is not bound to the configured repository.")
+              if not os.environ.get("GITHUB_WORKFLOW_REF", "").endswith("@refs/heads/" + config["default_branch"]):
+                  raise SyncError("Only the configured trusted default-branch workflow may run.")
+              execute(GitHub(token), config, mode)
+          
+          
+          if __name__ == "__main__":
+              try:
+                  main(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")))
+              except SyncError as error:
+                  report({"result": "FAILED", "reason": str(error)})
+                  raise SystemExit(1)
+              except Exception:
+                  report({"result": "FAILED", "reason": "Unexpected error; details suppressed to protect credentials."})
+                  raise SystemExit(1)
+          PY
+          cat > "$RUNNER_TEMP/upstream-config.json" <<'JSON'
+          {
+            "fork": "houxujiang/ACL4SSR",
+            "fork_id": 693310364,
+            "parent": "ACL4SSR/ACL4SSR",
+            "parent_id": 617804592,
+            "default_branch": "rm",
+            "namespace_reserved": false,
+            "schedule_enabled": false
+          }
+          JSON
+      - name: Audit or apply the approved tracking plan
+        shell: bash
+        env:
+          GH_WRITE_TOKEN: ${{ github.token }}
+          UPSTREAM_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'apply' }}
+        run: python3 "$RUNNER_TEMP/upstream-sync.py" "$RUNNER_TEMP/upstream-config.json"
+
